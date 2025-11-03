@@ -12,11 +12,7 @@ import httpx
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
-
-try:
-    from litellm import acompletion  # async
-except Exception:  # pragma: no cover
-    acompletion = None
+from litellm import acompletion
 
 # Simple tab->prompt mapping
 from .prompt_map import build_prompt_for_tab
@@ -59,7 +55,6 @@ class ChatRequest(BaseModel):
     messages: List[ChatMessage]
     active_tab: Optional[str] = Field(default=None, description="overview | metrics | inspector | chunks")
     view_context: Optional[Dict[str, Any]] = None
-    run_data: Optional[Dict[str, Any]] = Field(default=None, description="Provide on first call or when run changes")
     source: Optional[SourceSpec] = Field(default=None, description="Optional file reference: {collection, run_file, derived}")
 
 # Tool args
@@ -112,10 +107,6 @@ ALLOWED_BUILTINS = {
     "enumerate": enumerate,
     "range": range,
     "type": type,
-    "isinstance": isinstance,
-    "str": str,
-    "int": int,
-    "float": float,
     "isinstance": isinstance,
     "str": str,
     "int": int,
@@ -213,57 +204,51 @@ async def _run_dataset_query(expr: str, limit: Optional[int], char_limit: Option
     return {"result": value, "truncated": list_truncated, "char_truncated": char_truncated}
 
 
-async def _fetch_run_via_loader(src: SourceSpec, timeout_sec: float, request_id: str) -> Dict[str, Any]:
+async def _fetch_run_via_loader(src: SourceSpec, timeout_sec: float) -> Dict[str, Any]:
     """Fetch run via existing backend loader endpoint, honoring derived flag."""
     url = f"http://127.0.0.1:8000/collections/{src.collection}/runs/{src.run_file}"
     if src.derived:
         url += "?derived=true"
-    logger.info(f"[{request_id}] Agent: fetching run via loader {url}")
+    logger.info(f"Agent: fetching run via loader {url}")
     async with httpx.AsyncClient(timeout=timeout_sec) as client:
         resp = await client.get(url)
         resp.raise_for_status()
         return resp.json()
 
 @router.post("/chat/stream")
-async def chat_stream(req: Request, body: ChatRequest):
+async def chat_stream(body: ChatRequest):
     global CURRENT_RUN
-
-    request_id = uuid.uuid4().hex[:8]
-
-    if acompletion is None:  # pragma: no cover
-        raise HTTPException(status_code=500, detail="litellm is not available")
 
     # Load env 
     model = os.getenv("LLM_NAME")
     if not model:
-        logger.error(f"[{request_id}] LLM_NAME is not set in environment")
+        logger.error(f"LLM_NAME is not set in environment")
         raise HTTPException(status_code=500, detail="LLM_NAME is not set in environment")
     api_base = os.getenv("LLM_PROVIDER_API_BASE", os.getenv("LLM_API_BASE", "https://api.openai.com/v1"))
     api_key = os.getenv("LLM_PROVIDER_API_KEY", os.getenv("LLM_API_KEY"))
-    timeout_sec = float(os.getenv("LLM_TIMEOUT_SEC", "30"))
+    timeout_sec = float(os.getenv("LLM_TIMEOUT_SEC", "100"))
 
     logger.info(
-        f"[{request_id}] chat request: tab={body.active_tab} "
-        f"msgs={len(body.messages) if body.messages else 0} view_keys={sorted(body.view_context.keys()) if body.view_context else []} "
-        f"run_data={'yes' if body.run_data is not None else 'no'}"
+        f"chat request: tab={body.active_tab} "
+        f"msgs={len(body.messages) if body.messages else 0} view_keys={sorted(body.view_context.keys()) if body.view_context else []}"
     )
 
     if not api_key:
         raise HTTPException(status_code=400, detail="Missing LLM_PROVIDER_API_KEY in environment")
 
-    # Update current run: fetch via source using backend loader/cache
+
     if body.source is not None:
         src = body.source
         try:
-            CURRENT_RUN = await _fetch_run_via_loader(src, timeout_sec, request_id)
-            logger.info(f"[{request_id}] Agent: loaded run from loader (derived={src.derived})")
+            CURRENT_RUN = await _fetch_run_via_loader(src, timeout_sec)
+            logger.info(f"Agent: loaded run from loader (derived={src.derived})")
         except Exception as e:
-            logger.error(f"[{request_id}] Agent: failed to load run from loader: {e}")
+            logger.error(f"[Agent: failed to load run from loader: {e}")
             raise HTTPException(status_code=502, detail="Failed to fetch run from loader")
 
     # Build messages array
     sys_prompt = build_prompt_for_tab(body.active_tab, body.view_context)
-    logger.info(f"[{request_id}] === SYSTEM PROMPT ===\n{sys_prompt}")
+    logger.info(f"[=== SYSTEM PROMPT ===\n{sys_prompt}")
     messages: List[Dict[str, Any]] = [{"role": "system", "content": sys_prompt}]
     last_user = None
     for m in body.messages:
@@ -290,17 +275,16 @@ async def chat_stream(req: Request, body: ChatRequest):
             if m.role == "user":
                 last_user = m.content or ""
     if last_user:
-        logger.info(f"[{request_id}] === USER INPUT ===\n{last_user}")
+        logger.info(f"[ === USER INPUT ===\n{last_user}")
 
-    # Iterative tool-use loop: allow the model to call the tool up to 5 times before final answer
-    MAX_STEPS = 5
+    # Iterative tool-use loop: allow the model to call the tool up to 7 times before final answer
+    MAX_STEPS = 7
 
     async def sse_generator() -> Iterable[bytes]:
         # === TOOL LOOP ===
         tool_steps = 0
         tool_used = False
         tool_call_id: Optional[str] = None
-        MAX_STEPS = 10
         extra_grace_used = False
         while tool_steps < (MAX_STEPS + (1 if extra_grace_used else 0)):
             # Non-stream call with tools enabled
@@ -317,14 +301,14 @@ async def chat_stream(req: Request, body: ChatRequest):
                 )
             except Exception as e:
                 err = f"LLM call failed during tool loop: {e}"
-                logger.error(f"[{request_id}] [TOOL-LOOP-ERROR] {err}")
+                logger.error(f"[[TOOL-LOOP-ERROR] {err}")
                 yield f"data: {json.dumps({"error": err})}\n\n".encode("utf-8")
                 return
 
             msg = resp.choices[0].message
             tool_calls = getattr(msg, "tool_calls", None)
             if not tool_calls:
-                logger.info(f"[{request_id}] tool loop: no tool call (will stream final)")
+                logger.info(f"[tool loop: no tool call (will stream final)")
                 break
 
             call = tool_calls[0]
@@ -332,10 +316,10 @@ async def chat_stream(req: Request, body: ChatRequest):
             name = getattr(fn, "name", None) if fn else None
             args_raw = getattr(fn, "arguments", "{}") if fn else "{}"
             tool_call_id = getattr(call, "id", None)
-            logger.info(f"[{request_id}] tool loop: assistant requested tool name={name} id={tool_call_id} args={args_raw}")
+            logger.info(f"[tool loop: assistant requested tool name={name} args={json.dumps(args_raw, indent=4)}")
 
             if name != "dataset_query":
-                logger.info(f"[{request_id}] tool loop: unknown tool '{name}', stopping tool loop")
+                logger.info(f"[ tool loop: unknown tool '{name}', stopping tool loop")
                 break
 
             # Parse args
@@ -344,7 +328,7 @@ async def chat_stream(req: Request, body: ChatRequest):
                 tool_args = ToolCallArgs(**args)
             except Exception as e:
                 err = f"Invalid tool arguments: {e}"
-                logger.error(f"[{request_id}] [TOOL-ARGS-ERROR] {err}")
+                logger.error(f"[ [TOOL-ARGS-ERROR] {err}")
                 yield f"data: {json.dumps({"error": err})}\n\n".encode("utf-8")
                 return
 
@@ -371,7 +355,7 @@ async def chat_stream(req: Request, body: ChatRequest):
             bad = _prevalidate_expr(tool_args.expr)
             if bad:
                 err_msg = {"error": bad, "hint": "Write ONE expression: no assignments/semicolons/newlines."}
-                logger.error(f"[{request_id}] === TOOL ERROR (step {tool_steps+1}) ===\n{bad}")
+                logger.error(f"[ === TOOL ERROR (step {tool_steps+1}) ===\n{bad}")
                 tool_msg_err = {"role": "tool", "name": "dataset_query", "content": json.dumps(err_msg, ensure_ascii=False)}
                 if tool_call_id:
                     tool_msg_err["tool_call_id"] = tool_call_id
@@ -382,13 +366,13 @@ async def chat_stream(req: Request, body: ChatRequest):
                 tool_steps += 1
                 continue
             try:
-                logger.info(f"[{request_id}] === TOOL INPUT (step {tool_steps+1}) ===\nexpr={tool_args.expr}\nlimit={tool_args.limit}\nchar_limit={tool_args.char_limit}")
+                logger.info(f"[ === TOOL INPUT (step {tool_steps+1}) ===\nexpr={tool_args.expr}\nlimit={tool_args.limit}\nchar_limit={tool_args.char_limit}")
                 tool_result = await _run_dataset_query(tool_args.expr, tool_args.limit, tool_args.char_limit)
-                logger.info(f"[{request_id}] === TOOL OUTPUT (step {tool_steps+1}) ===\n{json.dumps(tool_result, ensure_ascii=False)}")
+                logger.info(f"[ === TOOL OUTPUT (step {tool_steps+1}) ===\n{json.dumps(tool_result, ensure_ascii=False)}")
             except Exception as e:
                 # Create an error tool result instead of failing the whole request
                 err_msg = {"error": str(e), "hint": "Ensure a single expression; avoid assignments/semicolons/newlines."}
-                logger.error(f"[{request_id}] === TOOL ERROR (step {tool_steps+1}) ===\n{str(e)}")
+                logger.error(f"[ === TOOL ERROR (step {tool_steps+1}) ===\n{str(e)}")
                 tool_msg_err = {"role": "tool", "name": "dataset_query", "content": json.dumps(err_msg, ensure_ascii=False)}
                 if tool_call_id:
                     tool_msg_err["tool_call_id"] = tool_call_id
@@ -416,7 +400,7 @@ async def chat_stream(req: Request, body: ChatRequest):
 
         # FINAL STREAM 
         try:
-            logger.info(f"[{request_id}] final: streaming answer (tool_choice=none)")
+            logger.info(f"[ final: streaming answer (tool_choice=none)")
             # tool_choice="none" explicitly disables new tool calls during final answer
             stream = await acompletion(
                 model=model,
@@ -429,7 +413,7 @@ async def chat_stream(req: Request, body: ChatRequest):
                 stream=True,
             )
         except Exception as e:
-            logger.error(f"[{request_id}] [FINAL-STREAM-ERROR] {e}")
+            logger.error(f"[ [FINAL-STREAM-ERROR] {e}")
             yield f"data: {json.dumps({"error": "Final LLM call failed"})}\n\n".encode("utf-8")
             return
 
@@ -442,10 +426,10 @@ async def chat_stream(req: Request, body: ChatRequest):
                     final_text_parts.append(text)
                     yield f"data: {json.dumps({"content": text})}\n\n".encode("utf-8")
         except Exception as e:
-            logger.error(f"[{request_id}] [STREAM-EMIT-ERROR] {e}")
+            logger.error(f"[ [STREAM-EMIT-ERROR] {e}")
         finally:
             final_text = "".join(final_text_parts)
-            logger.info(f"[{request_id}] === FINAL ANSWER ===\n{final_text}")
+            logger.info(f"[ === FINAL ANSWER ===\n{final_text}")
             yield b"event: done\ndata: {}\n\n"
 
     return StreamingResponse(sse_generator(), media_type="text/event-stream")

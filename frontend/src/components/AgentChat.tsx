@@ -401,132 +401,16 @@ const [open, setOpen] = useState<boolean>(false);
     updateCurrentSession(s => ({ ...s, isStreaming: false }));
   };
 
-  // Heuristics-based insights for quick guidance
-  const heuristics = useMemo(() => {
-    const run = ui.selectedRun;
-    const result = {
-      harmfulTop: [] as Array<{ doc_id: string; count: number }>,
-      missedOpp: [] as Array<{ doc_id: string; count: number }>,
-      overReliance: [] as Array<{ doc_id: string; count: number }>,
-      duplicateGroups: [] as Array<{ size: number; sampleText: string; doc_ids: string[] }>,
-      metricOutliers: {
-        worstByF1: [] as Array<{ query_id: string; f1: number }>,
-        worstByPrecision: [] as Array<{ query_id: string; precision: number }>,
-        worstByRecall: [] as Array<{ query_id: string; recall: number }>,
-        highHallucination: Number(run?.metrics?.generator_metrics?.hallucination ?? 0),
-        noiseRelevant: Number(run?.metrics?.generator_metrics?.noise_sensitivity_in_relevant ?? 0),
-        noiseIrrelevant: Number(run?.metrics?.generator_metrics?.noise_sensitivity_in_irrelevant ?? 0),
-      },
-      perQuestionFlags: {
-        lengthGaps: [] as Array<{ query_id: string; diff: number; gtWords: number; respWords: number }>,
-        lowUtilization: [] as Array<{ query_id: string; chunks: number; context_utilization: number }>,
-      },
-    };
-    if (!run) return result;
-    try {
-      const chunkMap = new Map<string, any>();
-      const dupMap = new Map<string, Set<string>>();
-      for (const q of run.results || []) {
-        if (!Array.isArray(q.retrieved_context)) continue;
-        for (const c of q.retrieved_context) {
-          const text = String(c?.text || '').trim().replace(/\s+/g, ' ');
-          const key = `${c?.doc_id || 'unknown'}:::${text}`;
-          if (!chunkMap.has(key)) chunkMap.set(key, c.effectiveness_analysis || {});
-          if (text.length > 0) {
-            if (!dupMap.has(text)) dupMap.set(text, new Set());
-            dupMap.get(text)!.add(String(c?.doc_id || 'unknown'));
-          }
-        }
-      }
-      const chunks = Array.from(chunkMap.entries()).map(([key, eff]) => {
-        const [doc_id] = key.split(':::');
-        const e = eff || {};
-        return {
-          doc_id,
-          gt_contradictions: Number(e.gt_contradictions) || 0,
-          gt_entailments: Number(e.gt_entailments) || 0,
-          gt_neutrals: Number(e.gt_neutrals) || 0,
-          response_entailments: Number(e.response_entailments) || 0,
-          response_contradictions: Number(e.response_contradictions) || 0,
-          total_appearances: Number(e.total_appearances) || 0,
-        };
-      });
-
-      result.harmfulTop = chunks
-        .filter((c) => c.gt_contradictions > 0)
-        .sort((a, b) => (b.gt_contradictions - a.gt_contradictions) || (b.total_appearances - a.total_appearances))
-        .slice(0, 5)
-        .map((c) => ({ doc_id: c.doc_id, count: c.gt_contradictions }));
-
-      result.missedOpp = chunks
-        .filter((c) => c.gt_entailments > 0 && c.response_entailments === 0)
-        .sort((a, b) => b.gt_entailments - a.gt_entailments)
-        .slice(0, 5)
-        .map((c) => ({ doc_id: c.doc_id, count: c.gt_entailments }));
-
-      result.overReliance = chunks
-        .filter((c) => c.response_entailments > 0 && c.gt_entailments === 0 && c.gt_contradictions === 0 && c.gt_neutrals > 0)
-        .sort((a, b) => b.response_entailments - a.response_entailments)
-        .slice(0, 5)
-        .map((c) => ({ doc_id: c.doc_id, count: c.response_entailments }));
-
-      result.duplicateGroups = Array.from(dupMap.entries())
-        .map(([text, ids]) => ({ size: ids.size, sampleText: text.slice(0, 140), doc_ids: Array.from(ids) }))
-        .filter((g) => g.size > 1)
-        .sort((a, b) => b.size - a.size)
-        .slice(0, 3);
-
-      const qs = Array.isArray(run.results) ? run.results : [];
-      result.metricOutliers.worstByF1 = [...qs]
-        .map((q) => ({ query_id: q.query_id, f1: Number(q.metrics?.f1 ?? 0) }))
-        .sort((a, b) => a.f1 - b.f1)
-        .slice(0, 3);
-      result.metricOutliers.worstByPrecision = [...qs]
-        .map((q) => ({ query_id: q.query_id, precision: Number((q as any).metrics?.precision ?? Number.POSITIVE_INFINITY) }))
-        .filter((x) => Number.isFinite(x.precision))
-        .sort((a, b) => a.precision - b.precision)
-        .slice(0, 3);
-      result.metricOutliers.worstByRecall = [...qs]
-        .map((q) => ({ query_id: q.query_id, recall: Number((q as any).metrics?.recall ?? Number.POSITIVE_INFINITY) }))
-        .filter((x) => Number.isFinite(x.recall))
-        .sort((a, b) => a.recall - b.recall)
-        .slice(0, 3);
-
-      const lengthGaps: Array<{ query_id: string; diff: number; gtWords: number; respWords: number }> = [];
-      const lowUtil: Array<{ query_id: string; chunks: number; context_utilization: number }> = [];
-      for (const q of qs) {
-        const gtWords = (q.gt_answer || '').split(/\s+/).filter(Boolean).length;
-        const respWords = (q.response || '').split(/\s+/).filter(Boolean).length;
-        const diff = gtWords > 0 ? respWords / gtWords : respWords > 0 ? Infinity : 1;
-        if (diff >= 2 || diff <= 0.5) {
-          lengthGaps.push({ query_id: q.query_id, diff, gtWords, respWords });
-        }
-        const chunksCount = Array.isArray(q.retrieved_context) ? q.retrieved_context.length : 0;
-        const cu = Number((q as any).metrics?.context_utilization ?? NaN);
-        if (chunksCount >= 6 && Number.isFinite(cu) && cu < 0.2) {
-          lowUtil.push({ query_id: q.query_id, chunks: chunksCount, context_utilization: cu });
-        }
-      }
-      result.perQuestionFlags.lengthGaps = lengthGaps
-        .sort((a, b) => Math.abs(b.diff - 1) - Math.abs(a.diff - 1))
-        .slice(0, 3);
-      result.perQuestionFlags.lowUtilization = lowUtil.sort((a, b) => b.chunks - a.chunks).slice(0, 3);
-    } catch {}
-    return result;
-  }, [ui]);
-
   const suggestedQuestions = useMemo(() => {
     const s: string[] = [];
     const tab = ui.activeTab;
     if (tab === 'overview') {
-      if (heuristics.metricOutliers.worstByF1.length > 0) s.push('Give me a brief overview of top metric outliers (precision/recall/f1) in this run.');
-      if (heuristics.harmfulTop.length > 0 || heuristics.missedOpp.length > 0 || heuristics.duplicateGroups.length > 0) {
-        s.push('Summarize the top issues at a glance (harmful retrieval, missed opportunities, duplicates).');
-      }
+      s.push('Give me a brief overview of top metric outliers (precision/recall/f1) in this run.');
+      s.push('Summarize the top issues at a glance (harmful retrieval, missed opportunities, duplicates).');
     } else if (tab === 'metrics') {
-      if (heuristics.metricOutliers.worstByF1.length > 0) s.push('List the 3 questions with lowest F1.');
-      if (heuristics.metricOutliers.worstByPrecision.length > 0) s.push('Show the 3 questions with lowest precision.');
-      if (heuristics.metricOutliers.worstByRecall.length > 0) s.push('Show the 3 questions with lowest recall.');
+      s.push('List the 3 questions with lowest F1.');
+      s.push('Show the 3 questions with lowest precision.');
+      s.push('Show the 3 questions with lowest recall.');
     } else if (tab === 'inspector') {
       if (ui.selectedQuestion) {
         s.push('For this question, show chunks contradicting the ground truth.');
@@ -536,13 +420,13 @@ const [open, setOpen] = useState<boolean>(false);
         s.push('Select a question to analyze, then ask about harmful or missed-opportunity chunks.');
       }
     } else if (tab === 'chunks') {
-      if (heuristics.harmfulTop.length > 0) s.push('List top 5 harmful chunks (GT contradictions) and where they appear.');
-      if (heuristics.missedOpp.length > 0) s.push('List chunks that entail GT but were not used by the response.');
-      if (heuristics.duplicateGroups.length > 0) s.push('Summarize duplicate chunk groups with examples.');
-      if (heuristics.overReliance.length > 0) s.push('Show chunks used by the response that are neutral to GT (possible over-reliance).');
+      s.push('List top 5 harmful chunks (GT contradictions) and where they appear.');
+      s.push('List chunks that entail GT but were not used by the response.');
+      s.push('Summarize duplicate chunk groups with examples.');
+      s.push('Show chunks used by the response that are neutral to GT (possible over-reliance).');
     }
     return s;
-  }, [heuristics, ui.activeTab, ui.selectedQuestion]);
+  }, [ui.activeTab, ui.selectedQuestion]);
 
   return (
     <>
@@ -651,15 +535,24 @@ const [open, setOpen] = useState<boolean>(false);
                 }
                 if (m.role === 'tool' || (m.role === 'assistant' && m.tool_calls)) {
                   // Build chip text
-                  if (m.role === 'assistant' && m.tool_calls) {
+                if (m.role === 'assistant' && m.tool_calls) {
                     // Assistant tool-call
                     const tc = m.tool_calls[0];
                     let argsPretty = '';
-                    try { const obj = JSON.parse(tc.function.arguments || '{}'); argsPretty = obj.expr ? String(obj.expr).slice(0, 80) : ''; } catch {}
+                    try {
+                      const args = JSON.parse(tc.function.arguments || '{}');
+                      // Format expr on its own line for readability
+                      if (args.expr) {
+                        const { expr, ...rest } = args;
+                        argsPretty = `expr:\n  ${expr}${Object.keys(rest).length > 0 ? '\n' + JSON.stringify(rest, null, 2) : ''}`;
+                      } else {
+                        argsPretty = JSON.stringify(args, null, 2);
+                      }
+                    } catch {}
                     const label = `${tc.function.name || 'tool'} call`;
                     return (
                       <div key={`${currentSession.id}-${m.id}`} className="agent-tool-steps">
-                        <span className="agent-tool-chip loading" title={argsPretty ? `expr: ${argsPretty}` : 'tool call'}>{label}<span className="meta"> loading…</span></span>
+                        <span className="agent-tool-chip loading" title={argsPretty || 'tool call'}>{label}<span className="meta"> loading…</span></span>
                       </div>
                     );
                   }
@@ -671,13 +564,7 @@ const [open, setOpen] = useState<boolean>(false);
                       const obj = JSON.parse(m.raw || '{}');
                       if (obj.error) { statusClass = 'err'; title = String(obj.error); }
                       else {
-                        let rows = 0;
-                        if (Array.isArray(obj.result)) rows = obj.result.length;
-                        else if (obj.result && typeof obj.result === 'object') rows = Object.keys(obj.result).length;
-                        const flags: string[] = [];
-                        if (obj.truncated) flags.push('truncated');
-                        if (obj.char_truncated) flags.push('char_truncated');
-                        title = `rows=${rows}${flags.length? ' • ' + flags.join(', ') : ''}`;
+                        title = JSON.stringify(obj.result, null, 2);
                       }
                     } catch { title = 'tool result'; }
                     const label = `${m.name || 'tool'} result`;

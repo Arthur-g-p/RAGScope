@@ -5,6 +5,7 @@ import MetricsDisplay from './MetricsDisplay';
 import { isIrrelevantFromSets } from '../utils/relevance';
 import { relAt as relationAt } from '../utils/relations';
 import ClaimChunkOverlay from './ClaimChunkOverlay';
+import Pill from './Pill';
 
 interface QuestionInspectorProps {
   question: Question;
@@ -22,6 +23,151 @@ interface QuestionInspectorProps {
   autoAbstainString?: string;
   onChangeAutoAbstainString?: (s: string) => void;
 }
+
+type ClaimStatus = 'entailed' | 'neutral' | 'contradiction';
+
+interface ClaimsListProps {
+  title: string;
+  claims: string[];
+  statuses: ClaimStatus[];
+  counts: { entailed: number; neutral: number; contradiction: number };
+  filters: { entailed: boolean; neutral: boolean; contradiction: boolean };
+  onFilterChange: (filters: { entailed: boolean; neutral: boolean; contradiction: boolean }) => void;
+  getTooltip: (status: ClaimStatus) => string;
+  dataAttrPrefix: string;
+  question?: Question;
+  responseClaimsList?: string[];
+}
+
+const ClaimsList: React.FC<ClaimsListProps> = ({
+  title,
+  claims,
+  statuses,
+  counts,
+  filters,
+  onFilterChange,
+  getTooltip,
+  dataAttrPrefix,
+  question,
+  responseClaimsList,
+}) => {
+  const isResponseContext = dataAttrPrefix === 'resp-claim';
+
+  return (
+    <div className="mt-2 bg-gray-50 p-4 rounded border">
+      <h4 className="text-sm font-semibold text-gray-800 mb-3">{title}</h4>
+      {claims.length > 0 ? (
+        <>
+          <div className="flex flex-wrap gap-2 mb-3">
+            <Pill
+              label="Entailed"
+              count={counts.entailed}
+              active={filters.entailed}
+              onClick={() => onFilterChange({ ...filters, entailed: !filters.entailed })}
+              variant="success"
+              tooltip={getTooltip('entailed')}
+            />
+            <Pill
+              label="Neutral"
+              count={counts.neutral}
+              active={filters.neutral}
+              onClick={() => onFilterChange({ ...filters, neutral: !filters.neutral })}
+              variant="neutral"
+              tooltip={getTooltip('neutral')}
+            />
+            <Pill
+              label="Contradictions"
+              count={counts.contradiction}
+              active={filters.contradiction}
+              onClick={() => onFilterChange({ ...filters, contradiction: !filters.contradiction })}
+              variant="danger"
+              tooltip={getTooltip('contradiction')}
+            />
+          </div>
+          <ul className="list-none space-y-2 text-sm">
+            {claims.map((c, i) => {
+              const status = statuses[i] as ClaimStatus;
+              if (
+                (status === 'entailed' && !filters.entailed) ||
+                (status === 'neutral' && !filters.neutral) ||
+                (status === 'contradiction' && !filters.contradiction)
+              ) {
+                return null;
+              }
+
+              const base = isResponseContext
+                ? 'relative whitespace-pre-wrap rounded-md px-3 py-2 border cursor-help flex items-center gap-2'
+                : 'whitespace-pre-wrap rounded-md px-3 py-2 border cursor-help flex items-center gap-2';
+              const cls =
+                status === 'entailed'
+                  ? `${base} bg-green-50 border-green-200 text-green-700`
+                  : status === 'contradiction'
+                  ? `${base} bg-red-50 border-red-200 text-red-700`
+                  : `${base} bg-gray-50 border-gray-200 text-gray-700`;
+
+              let showSelfKnowledge = false;
+              let showHallucination = false;
+
+              if (isResponseContext && question && responseClaimsList) {
+                const r2r: any[] = Array.isArray((question as any).retrieved2response)
+                  ? ((question as any).retrieved2response as any[])
+                  : [];
+                const chunkCount = Array.isArray(question.retrieved_context) ? question.retrieved_context.length : 0;
+                const claimCount = responseClaimsList.length;
+                let supportedByChunk = false;
+                for (let j = 0; j < chunkCount; j++) {
+                  const rel = relationAt(r2r, j, i, chunkCount, claimCount);
+                  const s = String(rel || '').toLowerCase();
+                  if (s === 'entailment') {
+                    supportedByChunk = true;
+                    break;
+                  }
+                }
+                const isCorrect = status === 'entailed';
+                showSelfKnowledge = isCorrect && !supportedByChunk;
+                showHallucination = !isCorrect && !supportedByChunk;
+              }
+
+              return (
+                <li
+                  key={`${dataAttrPrefix}-${i}`}
+                  {...{ [`data-${dataAttrPrefix}-index`]: i }}
+                  className={`${cls} qi-claim-item`}
+                  title={getTooltip(status)}
+                >
+                  <span className="qi-num-badge">{i + 1}</span>
+                  <span className={isResponseContext ? 'qi-claim-text' : ''}>{String(c || '')}</span>
+                  {showSelfKnowledge && (
+                    <span className="qi-claim-tag">
+                      <Pill
+                        label="Self Knowledge"
+                        variant="tag-blue"
+                        size="xxs"
+                        tooltip="This claim was not entailed in the chunks, but the claim is still correct, therefore it counts as self-knowledge. Possibly common knowledge or an error. Metric: Self Knowledge ▲"
+                      />
+                    </span>
+                  )}
+                  {showHallucination && (
+                    <span className="qi-claim-tag">
+                      <Pill
+                        label="Hallucination"
+                        variant="tag-red"
+                        size="xxs"
+                        tooltip="This claim was not supported by any chunk and is not correct. This is a hallucination. Metric: Hallucination ▲"
+                      />
+                    </span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      ) : (
+        <div className="text-sm text-gray-500">No claims extracted</div>
+      )}
+    </div>
+  );
+};
 
 const QuestionInspector: React.FC<QuestionInspectorProps> = ({ question, allQuestions, onSelectQuestion, onViewContextChange, abstained = false, onToggleAbstention, allAbstentions, autoAbstainString, onChangeAutoAbstainString }) => {
   const [isGTClaimsExpanded, setIsGTClaimsExpanded] = useState(false);
@@ -401,63 +547,16 @@ const QuestionInspector: React.FC<QuestionInspectorProps> = ({ question, allQues
                 {isGTClaimsExpanded ? 'Collapse Claims' : `Expand Claims (${gtClaimsList.length})`}
               </button>
               {isGTClaimsExpanded && (
-                <div className="mt-2 bg-gray-50 p-4 rounded border">
-                  <h4 className="text-sm font-semibold text-gray-800 mb-3">Ground Truth Claims</h4>
-                  {gtClaimsList.length > 0 ? (
-                    <>
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        <button
-                          type="button"
-                          className={`px-2 py-1 text-xs rounded-full border ${gtClaimFilters.entailed ? 'bg-green-50 text-green-700 border-green-200 qi-pill-active' : 'bg-white text-gray-400 border-gray-200 qi-pill-inactive'} qi-pill`}
-                          title={getGTClaimTooltip('entailed' as any)}
-                          onClick={() => setGtClaimFilters(s => ({ ...s, entailed: !s.entailed }))}
-                        >
-                          Entailed {gtCounts.entailed}
-                        </button>
-                        <button
-                          type="button"
-                          className={`px-2 py-1 text-xs rounded-full border ${gtClaimFilters.neutral ? 'bg-gray-50 text-gray-700 border-gray-200 qi-pill-active' : 'bg-white text-gray-400 border-gray-200 qi-pill-inactive'} qi-pill`}
-                          title={getGTClaimTooltip('neutral' as any)}
-                          onClick={() => setGtClaimFilters(s => ({ ...s, neutral: !s.neutral }))}
-                        >
-                          Neutral {gtCounts.neutral}
-                        </button>
-                        <button
-                          type="button"
-                          className={`px-2 py-1 text-xs rounded-full border ${gtClaimFilters.contradiction ? 'bg-red-50 text-red-700 border-red-200 qi-pill-active' : 'bg-white text-gray-400 border-gray-200 qi-pill-inactive'} qi-pill`}
-                          title={getGTClaimTooltip('contradiction' as any)}
-                          onClick={() => setGtClaimFilters(s => ({ ...s, contradiction: !s.contradiction }))}
-                        >
-                          Contradictions {gtCounts.contradiction}
-                        </button>
-                      </div>
-                      <ul className="list-none space-y-2 text-sm">
-                        {gtClaimsList.map((c, i) => {
-                          const status = gtClaimStatuses[i] as ClaimStatus;
-                          if ((status === 'entailed' && !gtClaimFilters.entailed) ||
-                              (status === 'neutral' && !gtClaimFilters.neutral) ||
-                              (status === 'contradiction' && !gtClaimFilters.contradiction)) {
-                            return null;
-                          }
-                          const base = 'whitespace-pre-wrap rounded-md px-3 py-2 border cursor-help flex items-center gap-2';
-                          const cls = status === 'entailed'
-                            ? `${base} bg-green-50 border-green-200 text-green-700`
-                            : status === 'contradiction'
-                              ? `${base} bg-red-50 border-red-200 text-red-700`
-                              : `${base} bg-gray-50 border-gray-200 text-gray-700`;
-                          return (
-                            <li key={`gt-claim-${i}`} data-gt-claim-index={i} className={`${cls} qi-claim-item`} title={getGTClaimTooltip(status)}>
-                              <span className="qi-num-badge">{i + 1}</span>
-                              <span>{String(c || '')}</span>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </>
-                  ) : (
-                    <div className="text-sm text-gray-500">No claims extracted</div>
-                  )}
-                </div>
+                <ClaimsList
+                  title="Ground Truth Claims"
+                  claims={gtClaimsList}
+                  statuses={gtClaimStatuses}
+                  counts={gtCounts}
+                  filters={gtClaimFilters}
+                  onFilterChange={setGtClaimFilters}
+                  getTooltip={getGTClaimTooltip}
+                  dataAttrPrefix="gt-claim"
+                />
               )}
             </div>
           </div>
@@ -504,17 +603,6 @@ const QuestionInspector: React.FC<QuestionInspectorProps> = ({ question, allQues
                   const tipGrounded = 'At least one response claim is supported by this chunk (entailment).';
                   const tipUnused = 'No response claim is supported by this chunk; the generator likely did not use it.';
                   const tipRespContr = 'At least one response claim conflicts with this chunk.';
-                  const pill = (active: boolean, onClick: () => void, clsOn: string, clsOff: string, label: string, count: number, title?: string) => (
-                    <button
-                      type="button"
-                      onClick={onClick}
-                      className={`px-2 py-0.5 rounded-full border text-xs qi-pill ${active ? `qi-pill-active ${clsOn}` : `qi-pill-inactive ${clsOff}`}`}
-                      title={title}
-                      aria-pressed={active}
-                    >
-                      {label} {count}
-                    </button>
-                  );
                   const join = (arr: string[]) => arr.length <= 1 ? arr.join('') : arr.slice(0, -1).join(', ') + ' and ' + arr.slice(-1);
                   const qualitySel: string[] = [];
                   if (chunkFilters.relevant) qualitySel.push('<span class=\"text-green-700\">relevant</span>');
@@ -530,65 +618,65 @@ const QuestionInspector: React.FC<QuestionInspectorProps> = ({ question, allQues
                         <div className="flex flex-col">
                           <div className="font-semibold text-gray-900 mb-1">Input Quality</div>
                           <div className="flex items-center gap-2 flex-wrap">
-                            {pill(
-                              chunkFilters.relevant,
-                              () => setChunkFilters(s => ({ ...s, relevant: !s.relevant })),
-                              'bg-green-50 text-green-700 border-green-200',
-                              'bg-white text-gray-400 border-gray-200',
-                              'Relevant',
-                              rel,
-                              tipRelevant,
-                            )}
-                            {pill(
-                              chunkFilters.irrelevant,
-                              () => setChunkFilters(s => ({ ...s, irrelevant: !s.irrelevant })),
-                              'bg-yellow-50 text-yellow-600 border-yellow-200',
-                              'bg-white text-gray-400 border-gray-200',
-                              'Irrelevant',
-                              irr,
-                              tipIrrelevant,
-                            )}
-                            {pill(
-                              chunkFilters.harming,
-                              () => setChunkFilters(s => ({ ...s, harming: !s.harming })),
-                              'bg-red-50 text-red-700 border-red-200',
-                              'bg-white text-gray-400 border-gray-200',
-                              'Harming',
-                              harm,
-                              tipHarming,
-                            )}
+                            <Pill
+                              label="Relevant"
+                              count={rel}
+                              active={chunkFilters.relevant}
+                              onClick={() => setChunkFilters(s => ({ ...s, relevant: !s.relevant }))}
+                              variant="success"
+                              size="xs"
+                              tooltip={tipRelevant}
+                            />
+                            <Pill
+                              label="Irrelevant"
+                              count={irr}
+                              active={chunkFilters.irrelevant}
+                              onClick={() => setChunkFilters(s => ({ ...s, irrelevant: !s.irrelevant }))}
+                              variant="warning"
+                              size="xs"
+                              tooltip={tipIrrelevant}
+                            />
+                            <Pill
+                              label="Harming"
+                              count={harm}
+                              active={chunkFilters.harming}
+                              onClick={() => setChunkFilters(s => ({ ...s, harming: !s.harming }))}
+                              variant="danger"
+                              size="xs"
+                              tooltip={tipHarming}
+                            />
                           </div>
                         </div>
                         <div className="flex flex-col">
                           <div className="font-semibold text-gray-900 mb-1">Generator usage</div>
                           <div className="flex items-center gap-2 flex-wrap">
-                            {pill(
-                              chunkFilters.grounded,
-                              () => setChunkFilters(s => ({ ...s, grounded: !s.grounded })),
-                              'bg-blue-50 text-blue-700 border-blue-200',
-                              'bg-white text-gray-400 border-gray-200',
-                              'Used',
-                              grounded,
-                              tipGrounded,
-                            )}
-                            {pill(
-                              chunkFilters.unused,
-                              () => setChunkFilters(s => ({ ...s, unused: !s.unused })),
-                              'bg-gray-50 text-gray-700 border-gray-200',
-                              'bg-white text-gray-400 border-gray-200',
-                              'Unused',
-                              unused,
-                              tipUnused,
-                            )}
-                            {pill(
-                              chunkFilters.contradicting,
-                              () => setChunkFilters(s => ({ ...s, contradicting: !s.contradicting })),
-                              'bg-red-50 text-red-700 border-red-200',
-                              'bg-white text-gray-400 border-gray-200',
-                              'Conflicting',
-                              respContr,
-                              tipRespContr,
-                            )}
+                            <Pill
+                              label="Used"
+                              count={grounded}
+                              active={chunkFilters.grounded}
+                              onClick={() => setChunkFilters(s => ({ ...s, grounded: !s.grounded }))}
+                              variant="info"
+                              size="xs"
+                              tooltip={tipGrounded}
+                            />
+                            <Pill
+                              label="Unused"
+                              count={unused}
+                              active={chunkFilters.unused}
+                              onClick={() => setChunkFilters(s => ({ ...s, unused: !s.unused }))}
+                              variant="neutral"
+                              size="xs"
+                              tooltip={tipUnused}
+                            />
+                            <Pill
+                              label="Conflicting"
+                              count={respContr}
+                              active={chunkFilters.contradicting}
+                              onClick={() => setChunkFilters(s => ({ ...s, contradicting: !s.contradicting }))}
+                              variant="danger"
+                              size="xs"
+                              tooltip={tipRespContr}
+                            />
                           </div>
                         </div>
                       </div>
@@ -630,27 +718,14 @@ const QuestionInspector: React.FC<QuestionInspectorProps> = ({ question, allQues
                           <div className="flex items-center gap-2">
                             <div className="flex items-center gap-2">
                               <div className="text-sm font-semibold text-gray-900">Chunk {index + 1}</div>
-                              {(() => {
-                                const st = status;
-                                const cls = st === 'relevant'
-                                  ? 'bg-green-50 text-green-700 border-green-200'
-                                  : st === 'harming'
-                                    ? 'bg-red-50 text-red-700 border-red-200'
-                                    : 'bg-yellow-50 text-yellow-600 border-yellow-200';
-                                const label = st === 'relevant' ? 'Relevant' : st === 'harming' ? 'Harming' : 'Irrelevant';
-                                return (
-                                  <span className={`px-2 py-1 text-xs rounded-full border qi-pill qi-pill-active ${cls}`} title={getChunkTooltip(st)}>{label}</span>
-                                );
-                              })()}
+                              <Pill
+                                label={status === 'relevant' ? 'Relevant' : status === 'harming' ? 'Harming' : 'Irrelevant'}
+                                variant={status === 'relevant' ? 'success' : status === 'harming' ? 'danger' : 'warning'}
+                                tooltip={getChunkTooltip(status)}
+                              />
                             </div>
                             {(() => {
                               const us = usageStatusForSets(sets);
-                              const cls = us === 'grounded'
-                                ? 'bg-blue-50 text-blue-700 border-blue-200'
-                                : us === 'contradicting'
-                                  ? 'bg-red-50 text-red-700 border-red-200'
-                                  : 'bg-gray-50 text-gray-700 border-gray-200';
-                              const label = us === 'grounded' ? 'Used' : us === 'contradicting' ? 'Conflicting' : 'Unused';
 
                               // Relationship arrow meta (with Missed opportunity now red)
                               const metaMap: Record<ChunkStatus, Record<UsageStatus, { label: string; description: string; color: 'green'|'gray'|'red' }>> = {
@@ -685,8 +760,12 @@ const QuestionInspector: React.FC<QuestionInspectorProps> = ({ question, allQues
                                     </svg>
                                   </div>
                                   {/* Right usage pill */}
-                                  <span className={`qi-pill border ${cls} qi-pill-active`} title={getUsageTooltip(us)}>{label}</span>
-                                  <span className="qi-pill border bg-gray-50 text-gray-700 border-gray-200">{wordCount} words</span>
+                                  <Pill
+                                    label={us === 'grounded' ? 'Used' : us === 'contradicting' ? 'Conflicting' : 'Unused'}
+                                    variant={us === 'grounded' ? 'info' : us === 'contradicting' ? 'danger' : 'neutral'}
+                                    tooltip={getUsageTooltip(us)}
+                                  />
+                                  <Pill label={`${wordCount} words`} variant="neutral" />
                                 </>
                               );
                             })()}
@@ -738,86 +817,18 @@ const QuestionInspector: React.FC<QuestionInspectorProps> = ({ question, allQues
                 {isResponseClaimsExpanded ? 'Collapse Claims' : `Expand Claims (${responseClaimsList.length})`}
               </button>
               {isResponseClaimsExpanded && (
-                <div className="mt-2 bg-gray-50 p-4 rounded border">
-                  <h4 className="text-sm font-semibold text-gray-800 mb-3">Response Claims</h4>
-                  {responseClaimsList.length > 0 ? (
-                    <>
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        <button
-                          type="button"
-                          className={`px-2 py-1 text-xs rounded-full border ${respClaimFilters.entailed ? 'bg-green-50 text-green-700 border-green-200 qi-pill-active' : 'bg-white text-gray-400 border-gray-200 qi-pill-inactive'} qi-pill`}
-                          title={getRespClaimTooltip('entailed' as any)}
-                          onClick={() => setRespClaimFilters(s => ({ ...s, entailed: !s.entailed }))}
-                        >
-                          Entailed {respCounts.entailed}
-                        </button>
-                        <button
-                          type="button"
-                          className={`px-2 py-1 text-xs rounded-full border ${respClaimFilters.neutral ? 'bg-gray-50 text-gray-700 border-gray-200 qi-pill-active' : 'bg-white text-gray-400 border-gray-200 qi-pill-inactive'} qi-pill`}
-                          title={getRespClaimTooltip('neutral' as any)}
-                          onClick={() => setRespClaimFilters(s => ({ ...s, neutral: !s.neutral }))}
-                        >
-                          Neutral {respCounts.neutral}
-                        </button>
-                        <button
-                          type="button"
-                          className={`px-2 py-1 text-xs rounded-full border ${respClaimFilters.contradiction ? 'bg-red-50 text-red-700 border-red-200 qi-pill-active' : 'bg-white text-gray-400 border-gray-200 qi-pill-inactive'} qi-pill`}
-                          title={getRespClaimTooltip('contradiction' as any)}
-                          onClick={() => setRespClaimFilters(s => ({ ...s, contradiction: !s.contradiction }))}
-                        >
-                          Contradictions {respCounts.contradiction}
-                        </button>
-                      </div>
-                      <ul className="list-none space-y-2 text-sm">
-                        {responseClaimsList.map((c, i) => {
-                          const status = respClaimStatuses[i] as ClaimStatus;
-                          if ((status === 'entailed' && !respClaimFilters.entailed) ||
-                              (status === 'neutral' && !respClaimFilters.neutral) ||
-                              (status === 'contradiction' && !respClaimFilters.contradiction)) {
-                            return null;
-                          }
-                          // Determine if any chunk entails this response claim
-                          const r2r: any[] = Array.isArray((question as any).retrieved2response) ? ((question as any).retrieved2response as any[]) : [];
-                          const chunkCount = Array.isArray(question.retrieved_context) ? question.retrieved_context.length : 0;
-                          const claimCount = responseClaimsList.length;
-                          let supportedByChunk = false;
-                          for (let j = 0; j < chunkCount; j++) {
-                            const rel = relationAt(r2r, j, i, chunkCount, claimCount);
-                            const s = String(rel || '').toLowerCase();
-                            if (s === 'entailment') { supportedByChunk = true; break; }
-                          }
-                          const isCorrect = status === 'entailed';
-                          const showSelfKnowledge = isCorrect && !supportedByChunk;
-                          const showHallucination = !isCorrect && !supportedByChunk;
-                          const base = 'relative whitespace-pre-wrap rounded-md px-3 py-2 border cursor-help flex items-center gap-2';
-                          const cls = status === 'entailed'
-                            ? `${base} bg-green-50 border-green-200 text-green-700`
-                            : status === 'contradiction'
-                              ? `${base} bg-red-50 border-red-200 text-red-700`
-                              : `${base} bg-gray-50 border-gray-200 text-gray-700`;
-                          return (
-                            <li key={`resp-claim-${i}`} data-resp-claim-index={i} className={`${cls} qi-claim-item`} title={getRespClaimTooltip(status)}>
-                              <span className="qi-num-badge">{i + 1}</span>
-                              <span className="qi-claim-text">{String(c || '')}</span>
-{showSelfKnowledge && (
-                                <span className="qi-claim-tag" title="This claim was not entailed in the chunks, but the claim is still correct, therefore it counts as self-knowledge. Possibly common knowledge or an error. Metric: Self Knowledge ▲">
-<span className="qi-pill qi-pill-xxs border qi-tag-blue">Self Knowledge</span>
-                                </span>
-                              )}
-                              {showHallucination && (
-                                <span className="qi-claim-tag" title="This claim was not supported by any chunk and is not correct. This is a hallucination. Metric: Hallucination ▲">
-<span className="qi-pill qi-pill-xxs border qi-tag-red">Hallucination</span>
-                                </span>
-                              )}
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </>
-                  ) : (
-                    <div className="text-sm text-gray-500">No claims extracted</div>
-                  )}
-                </div>
+                <ClaimsList
+                  title="Response Claims"
+                  claims={responseClaimsList}
+                  statuses={respClaimStatuses}
+                  counts={respCounts}
+                  filters={respClaimFilters}
+                  onFilterChange={setRespClaimFilters}
+                  getTooltip={getRespClaimTooltip}
+                  dataAttrPrefix="resp-claim"
+                  question={question}
+                  responseClaimsList={responseClaimsList}
+                />
               )}
             </div>
           </div>

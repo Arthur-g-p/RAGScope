@@ -3,6 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Question } from '../types';
 import { logger } from '../utils/logger';
 import { isIrrelevantFromCounts } from '../utils/relevance';
+import Pill from './Pill';
 
 interface ChunkAnalysisProps {
   questions: Question[];
@@ -38,6 +39,111 @@ interface EnhancedChunkData {
   gt_entailment_rate: number;
   response_entailment_rate: number;
 }
+
+// Reusable chunk relations table
+interface ChunkRelationsTableProps {
+  chunk: EnhancedChunkData;
+  helpActive: boolean;
+}
+
+const ChunkRelationsTable: React.FC<ChunkRelationsTableProps> = ({ chunk, helpActive }) => {
+  const gtTotal = (chunk.gt_entailments || 0) + (chunk.gt_neutrals || 0) + (chunk.gt_contradictions || 0);
+  const rTotal = (chunk.response_entailments || 0) + (chunk.response_neutrals || 0) + (chunk.response_contradictions || 0);
+  const pct = (v: number, t: number) => t > 0 ? Math.round((v / t) * 100) : 0;
+  const bg = (color: 'green'|'gray'|'red', p: number) => {
+    const a = 0.08 + (Math.min(Math.max(p, 0), 100) / 100) * 0.42;
+    if (color === 'green') return `rgba(16,185,129,${a.toFixed(2)})`;
+    if (color === 'gray') return `rgba(156,163,175,${a.toFixed(2)})`;
+    return `rgba(239,68,68,${a.toFixed(2)})`;
+  };
+
+  return (
+    <table className="min-w-full text-xs border border-gray-200 rounded">
+      <thead>
+        <tr className="bg-white">
+          <th className="px-3 py-2 text-left text-gray-700 font-medium">Outcome</th>
+          <th className="px-3 py-2 text-left text-green-700 font-medium">Entailments</th>
+          <th className="px-3 py-2 text-left text-gray-700 font-medium">Neutrals</th>
+          <th className="px-3 py-2 text-left text-red-700 font-medium">Contradictions</th>
+        </tr>
+      </thead>
+      <tbody className="bg-white">
+        <tr className="border-t border-gray-200">
+          <td className="px-3 py-2 align-top">
+            <div className="font-medium text-gray-800">Ground Truth</div>
+            <div className="text-gray-500">Retriever</div>
+          </td>
+          <td className="px-3 py-2" style={{ backgroundColor: (pct(chunk.gt_entailments || 0, gtTotal) > 0 ? bg('green', pct(chunk.gt_entailments || 0, gtTotal)) : 'transparent'), border: pct(chunk.gt_entailments || 0, gtTotal) === 100 ? '2px solid #065F46' : undefined }}>
+            {!helpActive ? (
+              <>
+                <span className="text-green-700 font-medium">{chunk.gt_entailments}</span>
+                <span className="text-gray-600"> ({pct(chunk.gt_entailments || 0, gtTotal)}%)</span>
+              </>
+            ) : (
+              <div className="text-[11px] text-gray-800">Relevant claim is retrieved. Metric: Claim Recall <span className="text-green-700">▲</span></div>
+            )}
+          </td>
+          <td className="px-3 py-2" style={{ backgroundColor: 'transparent', border: pct(chunk.gt_neutrals || 0, gtTotal) === 100 ? '2px solid #4B5563' : undefined }}>
+            {!helpActive ? (
+              <>
+                <span className="text-gray-700 font-medium">{chunk.gt_neutrals}</span>
+                <span className="text-gray-600"> ({pct(chunk.gt_neutrals || 0, gtTotal)}%)</span>
+              </>
+            ) : (
+              <div className="text-[11px] text-gray-800">Irrelevant claim is retrieved. Generator has more noise. Metric: Context Precision <span className="text-red-600">▼</span></div>
+            )}
+          </td>
+          <td className="px-3 py-2" style={{ backgroundColor: (pct(chunk.gt_contradictions || 0, gtTotal) > 0 ? bg('red', pct(chunk.gt_contradictions || 0, gtTotal)) : 'transparent'), border: pct(chunk.gt_contradictions || 0, gtTotal) === 100 ? '2px solid #B91C1C' : undefined }}>
+            {!helpActive ? (
+              <>
+                <span className="text-red-700 font-medium">{chunk.gt_contradictions}</span>
+                <span className="text-gray-600"> ({pct(chunk.gt_contradictions || 0, gtTotal)}%)</span>
+              </>
+            ) : (
+              <div className="text-[11px] text-gray-800">Claim contradicts ground truth. Generator may generate a wrong answer. Metric: Context Precision <span className="text-red-600">▼</span></div>
+            )}
+          </td>
+        </tr>
+        <tr className="border-t border-gray-200">
+          <td className="px-3 py-2 align-top">
+            <div className="font-medium text-gray-800">Response</div>
+            <div className="text-gray-500">Generator</div>
+          </td>
+          <td className="px-3 py-2" style={{ backgroundColor: (pct(chunk.response_entailments || 0, rTotal) > 0 ? bg('green', pct(chunk.response_entailments || 0, rTotal)) : 'transparent'), border: pct(chunk.response_entailments || 0, rTotal) === 100 ? '2px solid #065F46' : undefined }}>
+            {!helpActive ? (
+              <>
+                <span className="text-green-700 font-medium">{chunk.response_entailments}</span>
+                <span className="text-gray-600"> ({pct(chunk.response_entailments || 0, rTotal)}%)</span>
+              </>
+            ) : (
+              <div className="text-[11px] text-gray-800">Response is grounded in the chunks. Metric: Faithfulness <span className="text-green-700">▲</span>, Context Utilization <span className="text-green-700">▲</span></div>
+            )}
+          </td>
+          <td className="px-3 py-2" style={{ backgroundColor: 'transparent', border: pct(chunk.response_neutrals || 0, rTotal) === 100 ? '2px solid #4B5563' : undefined }}>
+            {!helpActive ? (
+              <>
+                <span className="text-gray-700 font-medium">{chunk.response_neutrals}</span>
+                <span className="text-gray-600"> ({pct(chunk.response_neutrals || 0, rTotal)}%)</span>
+              </>
+            ) : (
+              <div className="text-[11px] text-gray-800">Generator did not consider this chunk as relevant for the answer. Metric: Faithfulness <span className="text-red-600">▼</span></div>
+            )}
+          </td>
+          <td className="px-3 py-2" style={{ backgroundColor: (pct(chunk.response_contradictions || 0, rTotal) > 0 ? bg('red', pct(chunk.response_contradictions || 0, rTotal)) : 'transparent'), border: pct(chunk.response_contradictions || 0, rTotal) === 100 ? '2px solid #B91C1C' : undefined }}>
+            {!helpActive ? (
+              <>
+                <span className="text-red-700 font-medium">{chunk.response_contradictions}</span>
+                <span className="text-gray-600"> ({pct(chunk.response_contradictions || 0, rTotal)}%)</span>
+              </>
+            ) : (
+              <div className="text-[11px] text-gray-800">Generator created a contradicting statement to this chunks statements. Metric: Faithfulness <span className="text-red-600">▼</span></div>
+            )}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  );
+};
 
 // Reusable tooltip card for chunk info (used by both charts)
 const ChunkTooltipCard: React.FC<{ chunk: EnhancedChunkData }> = ({ chunk }) => {
@@ -101,6 +207,7 @@ const ChunkAnalysisInner: React.FC<ChunkAnalysisProps> = ({ questions, onViewCon
   const [activeEntIndex, setActiveEntIndex] = useState<number | null>(null);
   const [showPercent, setShowPercent] = useState<boolean>(false);
   const [helpCardKey, setHelpCardKey] = useState<string | null>(null);
+  const [bucketSize, setBucketSize] = useState<number>(50);
 
   React.useEffect(() => {
     logger.info('ChunkAnalysis rendered successfully');
@@ -179,7 +286,7 @@ const ChunkAnalysisInner: React.FC<ChunkAnalysisProps> = ({ questions, onViewCon
     const lengthCounts = new Map<number, number>();
     chunkMap.forEach(chunk => {
       if (chunk?.wordCount && Number.isFinite(chunk.wordCount)) {
-        const lengthBucket = Math.floor(Math.max(0, chunk.wordCount) / 50) * 50;
+        const lengthBucket = Math.floor(Math.max(0, chunk.wordCount) / bucketSize) * bucketSize;
         lengthCounts.set(lengthBucket, (lengthCounts.get(lengthBucket) || 0) + 1);
       }
     });
@@ -187,7 +294,7 @@ const ChunkAnalysisInner: React.FC<ChunkAnalysisProps> = ({ questions, onViewCon
     const lengthDistributionData = Array.from(lengthCounts.entries())
       .sort((a, b) => a[0] - b[0])
       .map(([length, count]) => ({
-        lengthRange: `${length}-${length + 49}`,
+        lengthRange: `${length}-${length + bucketSize - 1}`,
         count: Math.max(0, count),
         length: Math.max(0, length)
       }));
@@ -230,7 +337,7 @@ const ChunkAnalysisInner: React.FC<ChunkAnalysisProps> = ({ questions, onViewCon
     );
 
     return { lengthDistributionData, duplicateGroups, stats, enhancedChunkData };
-  }, [questions, topN]);
+  }, [questions, topN, bucketSize]);
 
   // Count chunks that are not relevant w.r.t. ground truth (purely Neutral, no Entailments or Contradictions)
   const notRelevantCount = useMemo(() => {
@@ -433,12 +540,6 @@ const ChunkAnalysisInner: React.FC<ChunkAnalysisProps> = ({ questions, onViewCon
     return [0, upper];
   }, [frequencyChartData]);
 
-  const frequencyXDomain = useMemo<string[]>(() => {
-    if (!Array.isArray(frequencyChartData)) return [];
-    const ids = frequencyChartData.map((d: any) => String(d?.id ?? ''));
-    return Array.from(new Set(ids)).filter(Boolean);
-  }, [frequencyChartData]);
-
   const entailmentYDomain = useMemo<[number, number]>(() => {
     if (showPercent) return [0, 1];
     const max = Array.isArray(chartData)
@@ -447,12 +548,6 @@ const ChunkAnalysisInner: React.FC<ChunkAnalysisProps> = ({ questions, onViewCon
     const upper = max > 0 ? Math.max(1, Math.ceil(max * 1.1)) : 1;
     return [0, upper];
   }, [chartData, showPercent]);
-
-  const entailmentXDomain = useMemo<string[]>(() => {
-    if (!Array.isArray(chartData)) return [];
-    const ids = chartData.map((d: any) => String(d?.doc_id ?? ''));
-    return Array.from(new Set(ids)).filter(Boolean);
-  }, [chartData]);
 
   // Sorted data for the expandable section
   const sortedChunkData = useMemo(() => {
@@ -819,12 +914,12 @@ const ChunkAnalysisInner: React.FC<ChunkAnalysisProps> = ({ questions, onViewCon
                 <button
                   type="button"
                   onClick={() => setShowPercent(false)}
-                  className={`px-2 py-1 text-xs ${!showPercent ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'}`}
+                  className={`px-3 py-1.5 text-xs ${!showPercent ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'}`}
                 >Counts</button>
                 <button
                   type="button"
                   onClick={() => setShowPercent(true)}
-                  className={`px-2 py-1 text-xs ${showPercent ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'}`}
+                  className={`px-3 py-1.5 text-xs ${showPercent ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'}`}
                 >Percent</button>
               </div>
             </div>
@@ -971,9 +1066,11 @@ const ChunkAnalysisInner: React.FC<ChunkAnalysisProps> = ({ questions, onViewCon
                                   <div className="flex items-center gap-2">
                                     <span className="text-sm text-gray-500">{chunk.wordCount} words</span>
                                     {isIrrelevant && (
-                                      <span className="px-2 py-1 text-xs rounded-full bg-yellow-50 text-yellow-600 border border-yellow-200" title="This chunk was retrieved but is not relevant to the ground truth (Neutral)">
-                                        Irrelevant
-                                      </span>
+                                      <Pill
+                                        label="Irrelevant"
+                                        variant="warning"
+                                        tooltip="This chunk was retrieved but is not relevant to the ground truth (Neutral)"
+                                      />
                                     )}
                                   </div>
                                 );
@@ -997,117 +1094,18 @@ const ChunkAnalysisInner: React.FC<ChunkAnalysisProps> = ({ questions, onViewCon
 
                                 {/* Data table with counts and percentages */}
                                 <div className="relative overflow-x-auto">
-                                  {(() => {
-                                    const gtTotal = (chunk.gt_entailments || 0) + (chunk.gt_neutrals || 0) + (chunk.gt_contradictions || 0);
-                                    const rTotal = (chunk.response_entailments || 0) + (chunk.response_neutrals || 0) + (chunk.response_contradictions || 0);
-                                    const pct = (v: number, t: number) => t > 0 ? Math.round((v / t) * 100) : 0;
-                                    const bg = (color: 'green'|'gray'|'red', p: number) => {
-                                      const a = 0.08 + (Math.min(Math.max(p, 0), 100) / 100) * 0.42; // 0.08..0.50
-                                      if (color === 'green') return `rgba(16,185,129,${a.toFixed(2)})`;
-                                      if (color === 'gray') return `rgba(156,163,175,${a.toFixed(2)})`;
-                                      return `rgba(239,68,68,${a.toFixed(2)})`;
-                                    };
-                                    const helpActive = helpCardKey === `${chunk.doc_id}-${index}`;
-                                    return (
-                                      <table className="min-w-full text-xs border border-gray-200 rounded">
-                                        <thead>
-                                          <tr className="bg-white">
-                                            <th className="px-3 py-2 text-left text-gray-700 font-medium">
-                                              <div className="flex items-center justify-between">
-                                                <span>Outcome</span>
-                                                <button
-                                                  type="button"
-                                                  aria-label="Help"
-                                                  className="ml-2 w-5 h-5 rounded-full bg-white ring-1 ring-gray-200 text-gray-600 hover:bg-gray-50 text-[10px] flex items-center justify-center"
-                                                  onMouseEnter={() => setHelpCardKey(`${chunk.doc_id}-${index}`)}
-                                                  onMouseLeave={() => setHelpCardKey(null)}
-                                                >
-                                                  ?
-                                                </button>
-                                              </div>
-                                            </th>
-                                            <th className="px-3 py-2 text-left text-green-700 font-medium">Entailments</th>
-                                            <th className="px-3 py-2 text-left text-gray-700 font-medium">Neutrals</th>
-                                            <th className="px-3 py-2 text-left text-red-700 font-medium">Contradictions</th>
-                                          </tr>
-                                        </thead>
-                                        <tbody className="bg-white">
-                                          <tr className="border-t border-gray-200">
-                                            <td className="px-3 py-2 align-top">
-                                              <div className="font-medium text-gray-800">Ground Truth</div>
-                                              <div className="text-gray-500">Retriever</div>
-                                            </td>
-                                            <td className="px-3 py-2" style={{ backgroundColor: (pct(chunk.gt_entailments || 0, gtTotal) > 0 ? bg('green', pct(chunk.gt_entailments || 0, gtTotal)) : 'transparent'), border: pct(chunk.gt_entailments || 0, gtTotal) === 100 ? '2px solid #065F46' : undefined }}>
-                                              {!helpActive ? (
-                                                <>
-                                                  <span className="text-green-700 font-medium">{chunk.gt_entailments}</span>
-                                                  <span className="text-gray-600"> ({pct(chunk.gt_entailments || 0, gtTotal)}%)</span>
-                                                </>
-                                              ) : (
-                                                <div className="text-[11px] text-gray-800">Relevant claim is retrieved. Metric: Claim Recall <span className="text-green-700">▲</span></div>
-                                              )}
-                                            </td>
-                                            <td className="px-3 py-2" style={{ backgroundColor: 'transparent', border: pct(chunk.gt_neutrals || 0, gtTotal) === 100 ? '2px solid #4B5563' : undefined }}>
-                                              {!helpActive ? (
-                                                <>
-                                                  <span className="text-gray-700 font-medium">{chunk.gt_neutrals}</span>
-                                                  <span className="text-gray-600"> ({pct(chunk.gt_neutrals || 0, gtTotal)}%)</span>
-                                                </>
-                                              ) : (
-                                                <div className="text-[11px] text-gray-800">Irrelevant claim is retrieved. Generator has more noise. Metric: Context Precision <span className="text-red-600">▼</span></div>
-                                              )}
-                                            </td>
-                                            <td className="px-3 py-2" style={{ backgroundColor: (pct(chunk.gt_contradictions || 0, gtTotal) > 0 ? bg('red', pct(chunk.gt_contradictions || 0, gtTotal)) : 'transparent'), border: pct(chunk.gt_contradictions || 0, gtTotal) === 100 ? '2px solid #B91C1C' : undefined }}>
-                                              {!helpActive ? (
-                                                <>
-                                                  <span className="text-red-700 font-medium">{chunk.gt_contradictions}</span>
-                                                  <span className="text-gray-600"> ({pct(chunk.gt_contradictions || 0, gtTotal)}%)</span>
-                                                </>
-                                              ) : (
-                                                <div className="text-[11px] text-gray-800">Claim contradicts ground truth. Generator may generate a wrong answer. Metric: Context Precision <span className="text-red-600">▼</span></div>
-                                              )}
-                                            </td>
-                                          </tr>
-                                          <tr className="border-t border-gray-200">
-                                            <td className="px-3 py-2 align-top">
-                                              <div className="font-medium text-gray-800">Response</div>
-                                              <div className="text-gray-500">Generator</div>
-                                            </td>
-                                            <td className="px-3 py-2" style={{ backgroundColor: (pct(chunk.response_entailments || 0, rTotal) > 0 ? bg('green', pct(chunk.response_entailments || 0, rTotal)) : 'transparent'), border: pct(chunk.response_entailments || 0, rTotal) === 100 ? '2px solid #065F46' : undefined }}>
-                                              {!helpActive ? (
-                                                <>
-                                                  <span className="text-green-700 font-medium">{chunk.response_entailments}</span>
-                                                  <span className="text-gray-600"> ({pct(chunk.response_entailments || 0, rTotal)}%)</span>
-                                                </>
-                                              ) : (
-                                                <div className="text-[11px] text-gray-800">Response is grounded in the chunks. Metric: Faithfulness <span className="text-green-700">▲</span>, Context Utilization <span className="text-green-700">▲</span></div>
-                                              )}
-                                            </td>
-                                            <td className="px-3 py-2" style={{ backgroundColor: 'transparent', border: pct(chunk.response_neutrals || 0, rTotal) === 100 ? '2px solid #4B5563' : undefined }}>
-                                              {!helpActive ? (
-                                                <>
-                                                  <span className="text-gray-700 font-medium">{chunk.response_neutrals}</span>
-                                                  <span className="text-gray-600"> ({pct(chunk.response_neutrals || 0, rTotal)}%)</span>
-                                                </>
-                                              ) : (
-                                                <div className="text-[11px] text-gray-800">Response contains unsupported statements. Metric: Noise Sensitivity <span className="text-red-600">▲</span></div>
-                                              )}
-                                            </td>
-                                            <td className="px-3 py-2" style={{ backgroundColor: (pct(chunk.response_contradictions || 0, rTotal) > 0 ? bg('red', pct(chunk.response_contradictions || 0, rTotal)) : 'transparent'), border: pct(chunk.response_contradictions || 0, rTotal) === 100 ? '2px solid #B91C1C' : undefined }}>
-                                              {!helpActive ? (
-                                                <>
-                                                  <span className="text-red-700 font-medium">{chunk.response_contradictions}</span>
-                                                  <span className="text-gray-600"> ({pct(chunk.response_contradictions || 0, rTotal)}%)</span>
-                                                </>
-                                              ) : (
-                                                <div className="text-[11px] text-gray-800">Response contains contradicting statements. Metric: Hallucination <span className="text-red-600">▲</span></div>
-                                              )}
-                                            </td>
-                                          </tr>
-                                        </tbody>
-                                      </table>
-                                    );
-                                  })()}
+                                  <div className="flex items-center justify-between mb-2">
+                                    <button
+                                      type="button"
+                                      aria-label="Help"
+                                      className="ml-auto w-5 h-5 rounded-full bg-white ring-1 ring-gray-200 text-gray-600 hover:bg-gray-50 text-[10px] flex items-center justify-center"
+                                      onMouseEnter={() => setHelpCardKey(`${chunk.doc_id}-${index}`)}
+                                      onMouseLeave={() => setHelpCardKey(null)}
+                                    >
+                                      ?
+                                    </button>
+                                  </div>
+                                  <ChunkRelationsTable chunk={chunk} helpActive={helpCardKey === `${chunk.doc_id}-${index}`} />
                                 </div>
 
                               </div>
@@ -1137,6 +1135,22 @@ const ChunkAnalysisInner: React.FC<ChunkAnalysisProps> = ({ questions, onViewCon
 
       {selectedView === 'length' && (
         <div>
+          <div className="mb-4">
+            <label className="text-sm font-medium text-gray-700">
+              Bucket size:
+              <select
+                value={bucketSize}
+                onChange={(e) => setBucketSize(Number(e.target.value))}
+                className="ml-2 rounded border-gray-300 text-sm"
+              >
+                <option value={10}>10 words</option>
+                <option value={25}>25 words</option>
+                <option value={50}>50 words</option>
+                <option value={100}>100 words</option>
+                <option value={200}>200 words</option>
+              </select>
+            </label>
+          </div>
           <div className="bg-white border border-gray-200 rounded-lg p-4" style={{ height: '400px' }}>
             <h3 className="text-lg font-semibold text-center mb-4 text-gray-800">Chunk Length Distribution</h3>
             <ResponsiveContainer width="100%" height="100%">
