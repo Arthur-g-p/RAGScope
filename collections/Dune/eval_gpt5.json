@@ -1,0 +1,795 @@
+{
+    "results": [
+        {
+            "query_id": "0",
+            "query": "On which planet are the sardaukar being trained?",
+            "gt_answer": "The Sardaukar are trained on the planet Salusa Secundus, the Padishah Emperor's prison planet, known for its harsh and brutal environment that breeds only the strongest and most ferocious fighters.",
+            "response": "The Sardaukar are trained on **Salusa Secundus**.",
+            "retrieved_context": [
+                {
+                    "doc_id": "92f1189e-1f65-45ce-ab06-39f9a1a64eb7",
+                    "text": "BENE GESSERIT TRAINING 190\nWay show this philosophy . The first \nshow s the necessit y for discipline : \"To \nuse raw powe r is to make yoursel f \ninfinitel y vulnerabl e to g reate r \npowers, \" and th..."
+                },
+                {
+                    "doc_id": "92f1189e-1f65-45ce-ab06-39f9a1a64eb7",
+                    "text": " by the environmen t than by tactica l \nconsiderations . Torped os were \nsimilarl y affected . Shield s becam e \nunreliable, bu t lasgun s did not therefor e \nbecom e more usefu l since the burst s \nw..."
+                },
+                {
+                    "doc_id": "92f1189e-1f65-45ce-ab06-39f9a1a64eb7",
+                    "text": " \ncontrol s my reality. \" The trainin g itself \nis based on a series of progressiv e \nexercises , lastin g approximatel y ten \nyears , whic h give the studen t powe r to\ncontro l hersel f mentally , p..."
+                },
+                {
+                    "doc_id": "92f1189e-1f65-45ce-ab06-39f9a1a64eb7",
+                    "text": "us e dispatche d this unit \nbefor e they could implemen t their \ntheory.\nMuch time was neede d to\ncomplet e the globa l network , during \nwhic h wome n gained some publi c \npower, eve n governin g for..."
+                },
+                {
+                    "doc_id": "92f1189e-1f65-45ce-ab06-39f9a1a64eb7",
+                    "text": " electe d her to the \nGenera l Counci l seem s to have come \nfrom the libera l and radica l factions . \nThe record s show Anteac as being an \nintellig ent woma n fully capabl e of \nmakin g independen ..."
+                }
+            ],
+            "response_claims": [
+                [
+                    "Sardaukar",
+                    "are trained on",
+                    "Salusa Secundus"
+                ]
+            ],
+            "gt_answer_claims": [
+                [
+                    "Sardaukar",
+                    "trained on",
+                    "Salusa Secundus"
+                ],
+                [
+                    "Salusa Secundus",
+                    "is",
+                    "Padishah Emperor's prison planet"
+                ],
+                [
+                    "Salusa Secundus",
+                    "known for",
+                    "harsh and brutal environment"
+                ],
+                [
+                    "harsh and brutal environment",
+                    "breeds",
+                    "strongest and most ferocious fighters"
+                ]
+            ],
+            "answer2response": [
+                "Entailment"
+            ],
+            "response2answer": [
+                "Entailment",
+                "Neutral",
+                "Neutral",
+                "Neutral"
+            ],
+            "retrieved2response": [
+                [
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ]
+            ],
+            "retrieved2answer": [
+                [
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ],
+                [
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ],
+                [
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ],
+                [
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ]
+            ],
+            "metrics": {
+                "context_utilization": 0.0,
+                "noise_sensitivity_in_relevant": 0.0,
+                "noise_sensitivity_in_irrelevant": 0.0,
+                "recall": 0.25,
+                "claim_recall": 0.0,
+                "context_precision": 0.0,
+                "precision": 1.0,
+                "f1": 0.4,
+                "hallucination": 0.0,
+                "self_knowledge": 1.0,
+                "faithfulness": 0.0
+            }
+        },
+        {
+            "query_id": "1",
+            "query": "What are the names of the children of paul atreides?",
+            "gt_answer": "The children are being called Leto II Atreides and Ghanima Atreides.",
+            "response": "According to the *Dune Encyclopedia*, Paul Atreides had twin children with Chani:  \n\n- **Leto II Atreides**  \n- **Ghanima Atreides**  \n\nThese are the only children of Paul Atreides mentioned in the provided context.",
+            "retrieved_context": [
+                {
+                    "doc_id": "92f1189e-1f65-45ce-ab06-39f9a1a64eb7",
+                    "text": "ATREIDES, PAUL 115\nremain s are traditionall y assume d \ninterre d in the long-sough t Skull \nTomb1or Skull Place on Arrakis . His \nmothe r was the Lady Jessi ca \nHarkonne n (10154 -10256) , the basta..."
+                },
+                {
+                    "doc_id": "92f1189e-1f65-45ce-ab06-39f9a1a64eb7",
+                    "text": " was such a man, born of Hous e Atreides, \nwho h ad remarkabl e power , so \nremarkabl e that throug h his acts and \nthose of his son, Let o II, the historie s of \nall the world s were foreve r changed..."
+                },
+                {
+                    "doc_id": "92f1189e-1f65-45ce-ab06-39f9a1a64eb7",
+                    "text": "ATREIDES, GHANIMA 81\nThe first three girls, Eleanor, \nHelene , and Elaine , were born during \nthe perio d when Ghanim a was worki ng \nwith Voice s from the immediat e past. \n(Year s later, when she di..."
+                },
+                {
+                    "doc_id": "92f1189e-1f65-45ce-ab06-39f9a1a64eb7",
+                    "text": "ATREIDES, PAUL 121\nCorrino , and Bene Gesseri t\nconfederate s was stage d in 102051Paul \nsurvive d the attack , but was blinde d in \nit; and, as well he knew , to be a blind \nFreme n was to be condemn..."
+                },
+                {
+                    "doc_id": "92f1189e-1f65-45ce-ab06-39f9a1a64eb7",
+                    "text": "a \nacces s to the lives ofall Frem en \nReveren d Mothers , it also subjecte d the \npsychicall y defensele ss fetus to the \nsame a wareness . This inadverten t \nassaul t on Alia was the cause of her \na..."
+                }
+            ],
+            "response_claims": [
+                [
+                    "Paul Atreides",
+                    "had child",
+                    "Leto II Atreides"
+                ],
+                [
+                    "Paul Atreides",
+                    "had child",
+                    "Ghanima Atreides"
+                ],
+                [
+                    "Paul Atreides",
+                    "had children with",
+                    "Chani"
+                ],
+                [
+                    "Source",
+                    "is",
+                    "Dune Encyclopedia"
+                ]
+            ],
+            "gt_answer_claims": [
+                [
+                    "Paul Atreides",
+                    "has child",
+                    "Leto II Atreides"
+                ],
+                [
+                    "Paul Atreides",
+                    "has child",
+                    "Ghanima Atreides"
+                ]
+            ],
+            "answer2response": [
+                "Entailment",
+                "Entailment",
+                "Neutral",
+                "Neutral"
+            ],
+            "response2answer": [
+                "Entailment",
+                "Entailment"
+            ],
+            "retrieved2response": [
+                [
+                    "Neutral",
+                    "Entailment",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ],
+                [
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ],
+                [
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ],
+                [
+                    "Neutral",
+                    "Neutral",
+                    "Entailment",
+                    "Neutral",
+                    "Neutral"
+                ]
+            ],
+            "retrieved2answer": [
+                [
+                    "Neutral",
+                    "Entailment",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ],
+                [
+                    "Neutral",
+                    "Neutral",
+                    "Entailment",
+                    "Neutral",
+                    "Neutral"
+                ]
+            ],
+            "metrics": {
+                "context_utilization": 1.0,
+                "noise_sensitivity_in_relevant": 0.25,
+                "noise_sensitivity_in_irrelevant": 0.0,
+                "recall": 1.0,
+                "claim_recall": 1.0,
+                "context_precision": 0.4,
+                "precision": 0.5,
+                "f1": 0.6666666666666666,
+                "hallucination": 0.25,
+                "self_knowledge": 0.25,
+                "faithfulness": 0.5
+            }
+        },
+        {
+            "query_id": "2",
+            "query": "Who is the central protagonist of Dune (1965), the first novel in Frank Herbert\u2019s saga?",
+            "gt_answer": "Paul Atreides, heir of House Atreides.",
+            "response": "The central protagonist of *Dune* (1965), the first novel in Frank Herbert\u2019s saga, is **Paul Atreides**.",
+            "retrieved_context": [
+                {
+                    "doc_id": "92f1189e-1f65-45ce-ab06-39f9a1a64eb7",
+                    "text": "ad \nlong k nown was possible , a \ndevelopmen t feare d abov e all other \nconsequence s of their breedi ng \nprogram . Shadda m IV insiste d that she \nrevea l her brother' s where about s and \ntried fut..."
+                },
+                {
+                    "doc_id": "92f1189e-1f65-45ce-ab06-39f9a1a64eb7",
+                    "text": "the knife edge , on \nthe tightrop e across a chasm , at the \nfulcrum , is what made Paul Give r and \nTaker , anim a and animus , Yin and \nYang , male and female , Decide r and \nDecided , Reconcile r o..."
+                },
+                {
+                    "doc_id": "92f1189e-1f65-45ce-ab06-39f9a1a64eb7",
+                    "text": "ATREIDES, LETO II,asenigma. 104\nGive n the constan t powe r struggle s \nduring the rule of the Padisha h \nShadda m IV, such a feat is remarkable. \nAnd, once again , histor y reveal s that \nLeto knew w..."
+                },
+                {
+                    "doc_id": "92f1189e-1f65-45ce-ab06-39f9a1a64eb7",
+                    "text": "s becaus e it \nwas a key to what he intende d for the \nfuture.\nThus , Leto' s attitud e toward \nhistorian s was a mixtur e of ironi c jest \nand tyranni c policy . On the one hand, \nLeto knew that thos..."
+                },
+                {
+                    "doc_id": "92f1189e-1f65-45ce-ab06-39f9a1a64eb7",
+                    "text": " a myth \nenshroude d in legend , and it may be \nthat he himsel f create d both myth and \nlegend . It may be, in fact, that we will \nneve r know the truth abou t this errati c \ngenius , this predato r ..."
+                }
+            ],
+            "response_claims": [
+                [
+                    "Dune (1965)",
+                    "central protagonist",
+                    "Paul Atreides"
+                ],
+                [
+                    "Dune (1965)",
+                    "is",
+                    "first novel in Frank Herbert\u2019s saga"
+                ]
+            ],
+            "gt_answer_claims": [
+                [
+                    "Paul Atreides",
+                    "is",
+                    "central protagonist of Dune (1965)"
+                ],
+                [
+                    "Paul Atreides",
+                    "is heir of",
+                    "House Atreides"
+                ]
+            ],
+            "answer2response": [
+                "Entailment",
+                "Neutral"
+            ],
+            "response2answer": [
+                "Entailment",
+                "Neutral"
+            ],
+            "retrieved2response": [
+                [
+                    "Neutral",
+                    "Entailment",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ],
+                [
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ]
+            ],
+            "retrieved2answer": [
+                [
+                    "Neutral",
+                    "Entailment",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ],
+                [
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ]
+            ],
+            "metrics": {
+                "context_utilization": 1.0,
+                "noise_sensitivity_in_relevant": 0.0,
+                "noise_sensitivity_in_irrelevant": 0.0,
+                "recall": 0.5,
+                "claim_recall": 0.5,
+                "context_precision": 0.2,
+                "precision": 0.5,
+                "f1": 0.5,
+                "hallucination": 0.5,
+                "self_knowledge": 0.0,
+                "faithfulness": 0.5
+            }
+        },
+        {
+            "query_id": "3",
+            "query": "What is the substance on Arrakis that makes interstellar travel possible, and why?",
+            "gt_answer": "The spice melange, because it enhances prescience in Guild Navigators, allowing them to safely chart spacefolding paths.",
+            "response": "The substance on Arrakis that makes interstellar travel possible is **the spice melange**.  \n\nWhile the provided excerpts from *The Dune Encyclopedia* do not explicitly mention it in the quoted sections, within the broader Dune universe the spice is unique to Arrakis and is essential because it grants the Spacing Guild Navigators the heightened prescient awareness they need to safely guide starships through foldspace. Without spice-enhanced prescience, interstellar travel using the Holtzman effect would be fatally dangerous due to the inability to avoid obstacles during faster-than-light jumps.  \n\nSo, the answer is:\n\n**Spice melange**, found only on Arrakis, makes interstellar travel possible because it allows Guild Navigators to safely navigate foldspace using prescient abilities.  \n\nWould you like me to check *within the text of the Encyclopedia itself* for the exact passages where it links spice to space travel?",
+            "retrieved_context": [
+                {
+                    "doc_id": "92f1189e-1f65-45ce-ab06-39f9a1a64eb7",
+                    "text": "s has a relativel y weak \nmagneti c field whic h is produce d in the \ncore. It is of interes t to note that even \nafter many thousand s of years of study \nthe exact mechanis m by whic h the \nmagneti c..."
+                },
+                {
+                    "doc_id": "92f1189e-1f65-45ce-ab06-39f9a1a64eb7",
+                    "text": "he latter \ncomponen t is responsibl e for the \nyello w brow n tint. Largel y becaus e of \nits oxidizin g atmosphere , there are no \nknow n life form s on Menar is.\nArrakis . Menaris , in \ncombinatio n..."
+                },
+                {
+                    "doc_id": "92f1189e-1f65-45ce-ab06-39f9a1a64eb7",
+                    "text": "ARRAKIS, Atmosphere ofbefore theAtreides 45\nobviou s dangers . This combinatio n of \nfield, experimental , and theoretica l \nresearc h has endeare d him to \nplanetologist s (actuall y to all \nscientis..."
+                },
+                {
+                    "doc_id": "92f1189e-1f65-45ce-ab06-39f9a1a64eb7",
+                    "text": "ARRAKIS, Oxygen Saga 60\nable to surviv e the initia l cataclysmi c \nevent . It was thus given time to adapt \nto the gradua l evaporatio n of what\nremaine d of the origina l oceans . The \nworm' s preda..."
+                },
+                {
+                    "doc_id": "92f1189e-1f65-45ce-ab06-39f9a1a64eb7",
+                    "text": "ARRAKIS, Atmosphere ofbefore theAtreides 40\nThis transitio n is only a few meter s \nthick and is characterize d by high \ndynami c turbulence.\nHypo -seismi c studie s have \nshow n that Revon a possesse..."
+                }
+            ],
+            "response_claims": [
+                [
+                    "Substance on Arrakis",
+                    "is",
+                    "spice melange"
+                ],
+                [
+                    "Spice melange",
+                    "found on",
+                    "Arrakis"
+                ],
+                [
+                    "Spice melange",
+                    "essential for",
+                    "interstellar travel"
+                ],
+                [
+                    "Spice melange",
+                    "grants",
+                    "prescient awareness"
+                ],
+                [
+                    "Prescient awareness",
+                    "enables",
+                    "safe navigation through foldspace"
+                ],
+                [
+                    "Guild Navigators",
+                    "use",
+                    "spice melange"
+                ],
+                [
+                    "Guild Navigators",
+                    "have",
+                    "prescient awareness"
+                ],
+                [
+                    "Without spice-enhanced prescience",
+                    "result",
+                    "fatal danger in interstellar travel"
+                ],
+                [
+                    "Fatal danger in interstellar travel",
+                    "caused by",
+                    "inability to avoid obstacles during faster-than-light jumps"
+                ],
+                [
+                    "Faster-than-light jumps",
+                    "enabled by",
+                    "Holtzman effect"
+                ]
+            ],
+            "gt_answer_claims": [
+                [
+                    "Spice melange",
+                    "enables",
+                    "interstellar travel"
+                ],
+                [
+                    "Spice melange",
+                    "enhances",
+                    "prescience in Guild Navigators"
+                ],
+                [
+                    "Prescience in Guild Navigators",
+                    "allows",
+                    "safe charting of spacefolding paths"
+                ]
+            ],
+            "answer2response": [
+                "Entailment",
+                "Neutral",
+                "Entailment",
+                "Entailment",
+                "Entailment",
+                "Entailment",
+                "Entailment",
+                "Entailment",
+                "Neutral",
+                "Neutral"
+            ],
+            "response2answer": [
+                "Entailment",
+                "Entailment",
+                "Entailment"
+            ],
+            "retrieved2response": [
+                [
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ],
+                [
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ],
+                [
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ],
+                [
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ],
+                [
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ],
+                [
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ],
+                [
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ],
+                [
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ],
+                [
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ],
+                [
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ]
+            ],
+            "retrieved2answer": [
+                [
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ],
+                [
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ],
+                [
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ]
+            ],
+            "metrics": {
+                "context_utilization": 0.0,
+                "noise_sensitivity_in_relevant": 0.0,
+                "noise_sensitivity_in_irrelevant": 0.0,
+                "recall": 1.0,
+                "claim_recall": 0.0,
+                "context_precision": 0.0,
+                "precision": 0.7,
+                "f1": 0.8235294117647058,
+                "hallucination": 0.3,
+                "self_knowledge": 0.7,
+                "faithfulness": 0.0
+            }
+        },
+        {
+            "query_id": "4",
+            "query": "In God Emperor of Dune, what is the cryptic term Leto II uses when describing the 'Nine-tenths' of humanity he shepherds toward his Golden Path, and how does it connect to his long-term breeding program?",
+            "gt_answer": "He refers to the 'Nine-tenths' as the mass of humanity deliberately constrained and directed under his tyranny, with the remaining 'one-tenth' (the Atreides-scattered bloodlines) being subtly preserved as reservoirs of genetic unpredictability\u2014essential for breaking his enforced stasis after his death and ensuring humanity\u2019s ultimate survival.",
+            "response": "I looked through the provided excerpts of *The Dune Encyclopedia*. There is discussion of Leto II\u2019s relationship to his **Golden Path**, his contradictions with the **Bene Gesserit breeding program**, and his role as the **\u201ctrue Kwisatz Haderach.\u201d** However, nowhere in the given context does it mention a **specific cryptic term used by Leto II** when describing the **\u201cnine-tenths\u201d of humanity** that he shepherded along the Golden Path.  \n\nWhile the texts do highlight his reliance on breeding programs (and the irony of his Golden Path in contrast to Bene Gesserit methods), **the cryptic terminology you\u2019re asking about does not appear in the provided context**.  \n\n\u2705 **Answer:** The context does not contain the cryptic term Leto II used for the \u201cnine-tenths\u201d of humanity in *God Emperor of Dune*, nor does it explicitly connect this phrasing to his long-term breeding program.  \n\nWould you like me to go beyond the provided text and draw on the actual *God Emperor of Dune* novel to give you the canonical answer from Herbert\u2019s work?",
+            "retrieved_context": [
+                {
+                    "doc_id": "92f1189e-1f65-45ce-ab06-39f9a1a64eb7",
+                    "text": "ssage s \nrecorde d shortl y befor e his demise , that he had develope d a mad \u2014some \nwoul d call it \"adolescent\" \u2014passi on \nfor the \"incomparable \" Hwi Noree . \nWhil e he admitte d that sexua l union\n..."
+                },
+                {
+                    "doc_id": "92f1189e-1f65-45ce-ab06-39f9a1a64eb7",
+                    "text": "ppe d the \nsingl e track towar d extinction . Toda y \nwe enjoy Leto' s legac y of surpris e and \nuncertainty , althoug h until the great \nhoard on Rakis was uncovere d we did \nnot know abou t eithe r ..."
+                },
+                {
+                    "doc_id": "92f1189e-1f65-45ce-ab06-39f9a1a64eb7",
+                    "text": "educationa l and breedin g program s was \nto gain contro l of the powe r bases of \nthe empire . The ancien t desir e for a \nhumanit y unite d by an activ e male \nconsciousnes s apparentl y had b een \n..."
+                },
+                {
+                    "doc_id": "92f1189e-1f65-45ce-ab06-39f9a1a64eb7",
+                    "text": "otherho od the sybil s forme d a \nnetwor k whic h tied togethe r all the \nmajo r politica l power s north and south \nof the Grea t Sea. Voice Euanthes also \ngives the detail s of memor y \ntransferen c..."
+                },
+                {
+                    "doc_id": "92f1189e-1f65-45ce-ab06-39f9a1a64eb7",
+                    "text": "s becaus e it \nwas a key to what he intende d for the \nfuture.\nThus , Leto' s attitud e toward \nhistorian s was a mixtur e of ironi c jest \nand tyranni c policy . On the one hand, \nLeto knew that thos..."
+                }
+            ],
+            "response_claims": [
+                [
+                    "Leto II",
+                    "associated with",
+                    "Golden Path"
+                ],
+                [
+                    "Leto II",
+                    "contradicted",
+                    "Bene Gesserit breeding program"
+                ],
+                [
+                    "Leto II",
+                    "role",
+                    "true Kwisatz Haderach"
+                ],
+                [
+                    "Provided context",
+                    "does not mention",
+                    "cryptic term for 'nine-tenths' of humanity"
+                ],
+                [
+                    "Provided context",
+                    "does not connect",
+                    "'nine-tenths' phrasing to long-term breeding program"
+                ]
+            ],
+            "gt_answer_claims": [
+                [
+                    "Nine-tenths",
+                    "described as",
+                    "mass of humanity"
+                ],
+                [
+                    "Nine-tenths",
+                    "constrained and directed under",
+                    "Leto II's tyranny"
+                ],
+                [
+                    "One-tenth",
+                    "described as",
+                    "Atreides-scattered bloodlines"
+                ],
+                [
+                    "One-tenth",
+                    "preserved as",
+                    "reservoirs of genetic unpredictability"
+                ],
+                [
+                    "Genetic unpredictability",
+                    "essential for",
+                    "breaking enforced stasis after Leto II's death"
+                ],
+                [
+                    "Genetic unpredictability",
+                    "ensures",
+                    "humanity's ultimate survival"
+                ]
+            ],
+            "answer2response": [
+                "Entailment",
+                "Neutral",
+                "Neutral",
+                "Entailment",
+                "Contradiction"
+            ],
+            "response2answer": [
+                "Neutral",
+                "Neutral",
+                "Neutral",
+                "Neutral",
+                "Neutral",
+                "Neutral"
+            ],
+            "retrieved2response": [
+                [
+                    "Neutral",
+                    "Entailment",
+                    "Entailment",
+                    "Neutral",
+                    "Neutral"
+                ],
+                [
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ],
+                [
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ],
+                [
+                    "Entailment",
+                    "Entailment",
+                    "Entailment",
+                    "Entailment",
+                    "Entailment"
+                ],
+                [
+                    "Entailment",
+                    "Entailment",
+                    "Entailment",
+                    "Entailment",
+                    "Entailment"
+                ]
+            ],
+            "retrieved2answer": [
+                [
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ],
+                [
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Entailment"
+                ],
+                [
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ],
+                [
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ],
+                [
+                    "Neutral",
+                    "Entailment",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ],
+                [
+                    "Neutral",
+                    "Entailment",
+                    "Neutral",
+                    "Neutral",
+                    "Neutral"
+                ]
+            ],
+            "metrics": {
+                "context_utilization": 0.0,
+                "noise_sensitivity_in_relevant": 0.2,
+                "noise_sensitivity_in_irrelevant": 0.0,
+                "recall": 0.0,
+                "claim_recall": 0.5,
+                "context_precision": 0.4,
+                "precision": 0.4,
+                "f1": 0.0,
+                "hallucination": 0.4,
+                "self_knowledge": 0.0,
+                "faithfulness": 0.6
+            }
+        }
+    ],
+    "metrics": {
+        "overall_metrics": {
+            "precision": 62.0,
+            "recall": 55.0,
+            "f1": 47.8
+        },
+        "retriever_metrics": {
+            "claim_recall": 40.0,
+            "context_precision": 20.0
+        },
+        "generator_metrics": {
+            "context_utilization": 40.0,
+            "noise_sensitivity_in_relevant": 9.0,
+            "noise_sensitivity_in_irrelevant": 0.0,
+            "hallucination": 29.0,
+            "self_knowledge": 39.0,
+            "faithfulness": 32.0
+        }
+    }
+}

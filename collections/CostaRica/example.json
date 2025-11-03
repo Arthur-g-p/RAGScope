@@ -1,0 +1,74 @@
+{
+	"results": [
+		{
+			"query_id": "0",
+			"query": "What is Costa Rica?",
+			"gt_answer": "Costa Rica is in Central America. Its capital is San José.",
+			"response": "Costa Rica is a Central American country with 5 million inhabitants.",
+			"retrieved_context": [
+				{
+					"doc_id": "chunk-1",
+					"text": "Costa Rica is a rugged, rainforested Central American country with coastlines on the Caribbean and Pacific."
+				},
+				{
+					"doc_id": "chunk-2",
+					"text": "Though its capital, San Jose, is home to cultural institutions like the Pre-Columbian Gold Museum, Costa Rica is known for its beaches, volcanoes, and biodiversity."
+				},
+				{
+					"doc_id": "chunk-3",
+					"text": "Roughly a quarter of its area is made up of protected jungle, teeming with wildlife including spider monkeys and quetzal birds."
+				}
+			],
+			"response_claims": [
+				["Costa Rica", "is a", "Central American country"],
+				["Costa Rica", "has", "5 million inhabitants"]
+			],
+			"gt_answer_claims": [
+				["Costa Rica", "is in", "Central America"],
+				["San José", "is capital of", "Costa Rica"]
+			],
+			"answer2response": ["Entailment", "Neutral"],
+			"response2answer": ["Entailment", "Neutral"],
+			"retrieved2answer": [
+				["Entailment", "Neutral", "Neutral"],
+				["Neutral", "Entailment", "Neutral"]
+			],
+			"retrieved2response": [
+				["Entailment", "Neutral", "Neutral"],
+				["Neutral", "Neutral", "Neutral"]
+			],
+			"metrics": {
+				"precision": 0.5,
+				"recall": 0.5,
+				"f1": 0.5,
+				"claim_recall": 1.0,
+				"context_precision": 0.6667,
+				"faithfulness": 0.5,
+				"context_utilization": 0.5,
+				"hallucination": 0.5,
+				"self_knowledge": 0.0,
+				"noise_sensitivity_in_relevant": 0.0,
+				"noise_sensitivity_in_irrelevant": 0.0
+			}
+		}
+	],
+	"metrics": {
+		"overall_metrics": {
+			"precision": 0.5,
+			"recall": 0.5,
+			"f1": 0.5
+		},
+		"retriever_metrics": {
+			"claim_recall": 1.0,
+			"context_precision": 0.6667
+		},
+		"generator_metrics": {
+			"faithfulness": 0.5,
+			"context_utilization": 0.5,
+			"hallucination": 0.5,
+			"self_knowledge": 0.0,
+			"noise_sensitivity_in_relevant": 0.0,
+			"noise_sensitivity_in_irrelevant": 0.0
+		}
+	}
+}
