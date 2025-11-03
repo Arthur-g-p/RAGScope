@@ -381,7 +381,7 @@ const QuestionInspector: React.FC<QuestionInspectorProps> = ({ question, allQues
 
       {/* Row 2: Three-panels horizontal (GT Answer, Retrieved Chunks, System Response) */}
       <div className="overflow-x-auto mb-8 pb-6 border-b border-gray-200">
-        <div id="qi-3col-grid" ref={gridRef} style={{ position: 'relative', display: 'grid', gridTemplateColumns: '2fr 3fr 2fr', gap: '1.5rem', minWidth: '1200px' }}>
+        <div id="qi-3col-grid" ref={gridRef} style={{ position: 'relative', display: 'grid', gridTemplateColumns: '2.5fr 3.5fr 2.5fr', gap: '1.5rem', minWidth: '1350px' }}>
           {/* Panel A: Ground Truth Answer (2 units) */}
           <div className="bg-white border p-6 rounded-lg">
             <h3 className="text-lg font-semibold mb-3">Ground Truth Answer</h3>
@@ -526,7 +526,7 @@ const QuestionInspector: React.FC<QuestionInspectorProps> = ({ question, allQues
                   if (chunkFilters.contradicting) usageSel.push('<span class=\"text-red-700\">conflicting</span>');
                   return (
                     <div className="mb-4">
-                      <div className="flex flex-wrap items-start gap-8 text-xs text-gray-700">
+                      <div className="flex flex-wrap items-start justify-between text-xs text-gray-700">
                         <div className="flex flex-col">
                           <div className="font-semibold text-gray-900 mb-1">Input Quality</div>
                           <div className="flex items-center gap-2 flex-wrap">

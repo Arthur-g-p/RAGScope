@@ -75,7 +75,7 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div style={{ maxWidth: '1400px' }} className="mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
               <h1 className="text-xl font-semibold text-gray-900">RAG Debugger</h1>
@@ -86,7 +86,7 @@ function App() {
       </header>
 
       {selectedRun ? (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div style={{ maxWidth: '1400px' }} className="mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <nav className="flex space-x-8 mb-6">
             {tabs.map((tab) => (
               <button
