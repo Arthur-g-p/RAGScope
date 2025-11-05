@@ -1,15 +1,15 @@
-# RAG-Debugger
+# RAG-Scope
 
-A single-run interactive analyzer for forensic debugging of RAG experiments with React frontend and FastAPI backend.
+An interactive analyzer for inspecting and debugging RAGChecker results.
+Built with React and FastAPI for single-run, forensic-style evaluation of retrieval pipelines.
 
 ## Features
 
 -   **Run Selection**: Load and analyze RAG experiment runs from JSON files
--   **Overview Tab**: High-level KPI cards showing overall, retriever, and generator metrics
+-   **Overview Tab**: All metrics showing overall, retriever, and generator metrics
 -   **Metrics Tab**: Interactive bar charts comparing metrics across questions
 -   **Inspector Tab**: Detailed question analysis with claims, entailments, and chunk inspection
 -   **Chunks Tab**: Analysis of chunk retrieval frequency, length distribution, and duplicates
--   **Professional UI**: Clean, modern interface with no scrolling - uses tabbed layout
 
 ## Setup Instructions (Windows)
 
@@ -85,7 +85,7 @@ Each run JSON file should follow the schema defined in RAGChecker (https://githu
 
 ## Agentic Assistant (experimental)
 
-The application provides an ReAct Agent at the bottom of right corner to answer questions about the application and the methodology. This feature is optional and requires your own API Key to an LLM provider of your choice. Save the key in the `.env` file.
+The application provides an ReAct Agent at the bottom of right corner to answer questions about the application, the data, and the methodology. This feature is optional and requires your own API Key to an LLM provider of your choice. Save the key in the `.env` file.
 
 ## Troubleshooting
 
@@ -100,4 +100,3 @@ All contributions are welcome. Important next features might be:
 
 -   Agentic retrieval examples
 -   Multi-Run View (comparison of runs)
--   DSPy the RAGChecker prompts
