@@ -3,6 +3,8 @@
 An interactive analyzer for inspecting and debugging RAGChecker results.
 Built with React and FastAPI for single-run, forensic-style evaluation of retrieval pipelines.
 
+![Animation](https://github.com/user-attachments/assets/d0c5a31e-3910-4124-aba4-8c7bab6f5c5a)
+
 ## Features
 
 -   **Run Selection**: Load and analyze RAG experiment runs from JSON files
